@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MCP Employee Search</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>MCP AI-Powered Database Search</h1>
+    <p class="subtitle">Ask natural language questions about employees, projects, and issues</p>
+    
+    <div class="introduction">
+      <p style="text-align: center; color: #64748b; margin: 15px 0 25px; font-size: 1.05rem; line-height: 1.6;">
+        This system uses AI to understand your natural language queries. Just ask questions like "Show me all projects".
+      </p>
+    </div>
+    
+    <div class="search-box">
+      <input id="query" placeholder="Ask anything about employees, projects, or issues (e.g., 'Show all employees', 'What issues did Aswin face?', 'List projects in AI department')" size="60">
+      <button onclick="search()" id="search-btn">Search</button>
+    </div>
+    
+    <div class="examples">
+      <h3>Try these examples:</h3>
+      <div class="example-buttons">
+        <button class="example-btn" onclick="fillExample('Show all employees')">All Employees</button>
+        <button class="example-btn" onclick="fillExample('Show employees in AI department')">AI Dept</button>
+        <button class="example-btn" onclick="fillExample('What are the projects?')">Projects</button>
+        <button class="example-btn" onclick="fillExample('How many employees?')">Count</button>
+        <button class="example-btn" onclick="fillExample('Show all projects')">All Projects</button>
+      </div>
+    </div>
+    
+    <div id="loading" class="loading hidden">Processing your request...</div>
+    
+    <div id="result" class="result"></div>
+  </div>
+
+  <script>
+    async function search() {
+      const queryInput = document.getElementById("query");
+      const query = queryInput.value.trim();
+      
+      if (!query) {
+        alert("Please enter a question");
+        return;
+      }
+      
+      // Show loading indicator
+      document.getElementById("loading").classList.remove("hidden");
+      document.getElementById("result").innerHTML = "";
+      
+      try {
+        const res = await fetch("/query", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({question: query})
+        });
+        
+        const data = await res.json();
+        
+        // Hide loading indicator
+        document.getElementById("loading").classList.add("hidden");
+        
+        // Display the formatted answer if available, otherwise show the raw data
+        const resultElement = document.getElementById("result");
+        if (data.formatted_answer) {
+          resultElement.innerHTML = formatResponse(data.formatted_answer);
+        } else {
+          resultElement.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        }
+      } catch (error) {
+        document.getElementById("loading").classList.add("hidden");
+        document.getElementById("result").textContent = "Error: " + error.message;
+      }
+    }
+    
+    function fillExample(text) {
+      document.getElementById("query").value = text;
+    }
+    
+    function formatResponse(text) {
+      // Convert line breaks to HTML<br>tags
+      return text.replace(/\n/g, '<br>');
+    }
+    
+    // Allow Enter key to trigger search
+    document.getElementById("query").addEventListener("keypress", function(event) {
+      if (event.key === "Enter") {
+        search();
+      }
+    });
+  </script>
+</body>
+</html>
